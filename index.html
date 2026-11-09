@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ventas de fichas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f7f8;--card:#fff;--ink:#12303b;--mute:#5d7580;--line:#d5e0e4;--accent:#0e7c86;--accent-ink:#fff;--coin:#e0a526;--ok:#1b7f4b;--err:#b3261e;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b21;--card:#16272f;--ink:#e6f0f3;--mute:#93aab3;--line:#2a414b;--accent:#3cb4bf;--accent-ink:#06242a;--coin:#f0be45;--ok:#5bd08d;--err:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Figtree,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);min-height:100vh}
+main{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;font-weight:800;margin:8px 0 18px;display:flex;align-items:center;gap:10px}
+h1 i{width:26px;height:26px;border-radius:50%;background:var(--coin);display:inline-block;box-shadow:inset 0 0 0 4px rgba(0,0,0,.12)}
+form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:16px}
+label,.lbl{font-weight:600;font-size:.9rem;display:block;margin-bottom:6px}
+input[type=text],input[type=number],input[type=date]{width:100%;font:inherit;font-size:1.1rem;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.who input{position:absolute;opacity:0}
+.who span{display:block;text-align:center;padding:12px;border:1px solid var(--line);border-radius:10px;font-weight:600;cursor:pointer}
+.who input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.who input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.profit{display:flex;justify-content:space-between;align-items:baseline;padding:14px;border-radius:10px;background:var(--bg);border:1px dashed var(--line)}
+.profit b{font-size:1.6rem;font-weight:800}
+.profit b.neg{color:var(--err)}
+button{font:inherit;font-weight:800;font-size:1.05rem;padding:15px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button:disabled{opacity:.6}
+#msg{min-height:1.4em;font-weight:600;text-align:center}
+#msg.ok{color:var(--ok)}#msg.err{color:var(--err)}
+</style>
+</head>
+<body>
+<main>
+<h1><i></i>Ventas de fichas</h1>
+<form id="f" autocomplete="off">
+  <div><span class="lbl">¿Quién carga?</span>
+    <div class="who">
+      <label><input type="radio" name="quien" value="Mateo" required><span>Mateo</span></label>
+      <label><input type="radio" name="quien" value="Mariano"><span>Mariano</span></label>
+    </div></div>
+  <div><label for="cliente">Nombre / departamento</label>
+    <input type="text" id="cliente" list="clientes" required><datalist id="clientes"></datalist></div>
+  <div class="row">
+    <div><label for="cant">Cantidad de fichas</label><input type="number" id="cant" inputmode="numeric" min="1" step="1" required></div>
+    <div><label for="fecha">Fecha</label><input type="date" id="fecha" required></div>
+  </div>
+  <div class="row">
+    <div><label for="compra">Precio compra (c/u)</label><input type="number" id="compra" inputmode="decimal" min="0" step="any" required></div>
+    <div><label for="venta">Precio venta (c/u)</label><input type="number" id="venta" inputmode="decimal" min="0" step="any" required></div>
+  </div>
+  <div class="profit"><span>Ganancia</span><b id="gan">$ 0</b></div>
+  <button id="btn" type="submit">Guardar venta</button>
+  <div id="msg" role="status" aria-live="polite"></div>
+</form>
+</main>
+<script>
+// Pegá acá la URL de la aplicación web de Apps Script (termina en /exec)
+const API = "https://script.google.com/macros/s/AKfycbzKcqGy5MQpF_m1vpbqHgGpmUK-S8cD-9k1OhvUokTHLe-zPY8LXerikB135CIyWpmcSA/exec";
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try { return localStorage.getItem(k) } catch(e){ return null } },
+  set(k,v){ try { localStorage.setItem(k,v) } catch(e){} }
+};
+const money = n => "$ " + Math.round(n).toLocaleString("es-AR");
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
+
+function calc(){
+  const g = ($("venta").value - $("compra").value) * $("cant").value;
+  const el = $("gan");
+  el.textContent = isFinite(g) ? money(g) : "$ 0";
+  el.classList.toggle("neg", g < 0);
+}
+["cant","compra","venta"].forEach(id => $(id).addEventListener("input", calc));
+
+// Valores recordados
+$("fecha").value = today();
+$("compra").value = store.get("compra") || "";
+$("venta").value = store.get("venta") || "";
+const q = store.get("quien");
+if (q) document.querySelector(`input[name=quien][value="${q}"]`).checked = true;
+calc();
+
+// Clientes existentes para el desplegable
+if (!API.startsWith("PEGAR")) {
+  fetch(API).then(r => r.json()).then(d => {
+    $("clientes").innerHTML = (d.clientes || []).map(c => `<option value="${c.replace(/"/g,"&quot;")}">`).join("");
+  }).catch(() => {});
+}
+
+function say(text, cls){ const m = $("msg"); m.textContent = text; m.className = cls || ""; }
+
+$("f").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (API.startsWith("PEGAR")) return say("Falta configurar la URL de Apps Script.", "err");
+  const data = {
+    cantidad: Number($("cant").value),
+    cliente: $("cliente").value.trim(),
+    compra: Number($("compra").value),
+    venta: Number($("venta").value),
+    fecha: $("fecha").value,
+    quien: document.querySelector("input[name=quien]:checked").value
+  };
+  $("btn").disabled = true; say("Guardando…");
+  try {
+    const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data) });
+    const res = await r.json();
+    if (!res.ok) throw new Error(res.error || "Error");
+    store.set("compra", data.compra); store.set("venta", data.venta); store.set("quien", data.quien);
+    say("Venta guardada: " + data.cantidad + " fichas para " + data.cliente + ".", "ok");
+    $("cant").value = ""; $("cliente").value = ""; calc(); $("cliente").focus();
+    const opt = document.createElement("option"); opt.value = data.cliente; $("clientes").appendChild(opt);
+  } catch (err) {
+    say("No se pudo guardar. Revisá la conexión y probá de nuevo.", "err");
+  } finally { $("btn").disabled = false; }
+});
+</script>
+</body>
+</html>
