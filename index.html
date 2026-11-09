@@ -31,6 +31,8 @@ input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline
 .profit b.neg{color:var(--err)}
 button{font:inherit;font-weight:800;font-size:1.05rem;padding:15px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
 button:disabled{opacity:.6}
+.sheet{display:block;margin-top:14px;text-align:center;padding:14px;border:2px solid var(--accent);border-radius:12px;color:var(--accent);font-weight:800;text-decoration:none}
+.sheet[hidden]{display:none}
 #msg{min-height:1.4em;font-weight:600;text-align:center}
 #msg.ok{color:var(--ok)}#msg.err{color:var(--err)}
 </style>
@@ -58,10 +60,14 @@ button:disabled{opacity:.6}
   <button id="btn" type="submit">Guardar venta</button>
   <div id="msg" role="status" aria-live="polite"></div>
 </form>
+<a id="sheetLink" class="sheet" href="#" target="_blank" rel="noopener" hidden>Abrir el Google Sheets</a>
 </main>
 <script>
 // Pegá acá la URL de la aplicación web de Apps Script (termina en /exec)
 const API = "https://script.google.com/macros/s/AKfycbzKcqGy5MQpF_m1vpbqHgGpmUK-S8cD-9k1OhvUokTHLe-zPY8LXerikB135CIyWpmcSA/exec";
+// Pegá acá la dirección del Google Sheet (la de la barra del navegador cuando lo abrís)
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/18Q6wyZ37S8xd4O24x14DCJ_WGi8ebrY2hRGlW6VRJDQ/edit?gid=1559333675#gid=1559333675";
+if (!SHEET_URL.startsWith("PEGAR")) { const a = document.getElementById("sheetLink"); a.href = SHEET_URL; a.hidden = false; }
 
 const $ = id => document.getElementById(id);
 const store = {
