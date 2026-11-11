@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ventas de fichas</title>
+<title>Fichas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
@@ -11,40 +11,58 @@
 :root{--bg:#f4f7f8;--card:#fff;--ink:#12303b;--mute:#5d7580;--line:#d5e0e4;--accent:#0e7c86;--accent-ink:#fff;--coin:#e0a526;--ok:#1b7f4b;--err:#b3261e;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b21;--card:#16272f;--ink:#e6f0f3;--mute:#93aab3;--line:#2a414b;--accent:#3cb4bf;--accent-ink:#06242a;--coin:#f0be45;--ok:#5bd08d;--err:#ff8a80;color-scheme:dark}}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0}
 body{font-family:Figtree,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);min-height:100vh}
 main{max-width:480px;margin:0 auto;padding:20px 16px 40px}
-h1{font-size:1.5rem;font-weight:800;margin:8px 0 18px;display:flex;align-items:center;gap:10px}
+h1{font-size:1.5rem;font-weight:800;margin:8px 0 16px;display:flex;align-items:center;gap:10px}
 h1 i{width:26px;height:26px;border-radius:50%;background:var(--coin);display:inline-block;box-shadow:inset 0 0 0 4px rgba(0,0,0,.12)}
 form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:16px}
 label,.lbl{font-weight:600;font-size:.9rem;display:block;margin-bottom:6px}
 input[type=text],input[type=number],input[type=date]{width:100%;font:inherit;font-size:1.1rem;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
-input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .who{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.who label{margin:0}
 .who input{position:absolute;opacity:0}
-.who span{display:block;text-align:center;padding:12px;border:1px solid var(--line);border-radius:10px;font-weight:600;cursor:pointer}
+.who span{display:block;text-align:center;padding:12px;border:1px solid var(--line);border-radius:10px;font-weight:600;cursor:pointer;background:var(--card)}
 .who input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .who input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.modo{margin-bottom:14px}
+.modo span{padding:14px;font-size:1.1rem;font-weight:800}
 .profit{display:flex;justify-content:space-between;align-items:baseline;padding:14px;border-radius:10px;background:var(--bg);border:1px dashed var(--line)}
 .profit b{font-size:1.6rem;font-weight:800}
 .profit b.neg{color:var(--err)}
 button{font:inherit;font-weight:800;font-size:1.05rem;padding:15px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
 button:disabled{opacity:.6}
+.msg{min-height:1.4em;font-weight:600;text-align:center}
+.msg.ok{color:var(--ok)}.msg.err{color:var(--err)}
 .sheet{display:block;margin-top:14px;text-align:center;padding:14px;border:2px solid var(--accent);border-radius:12px;color:var(--accent);font-weight:800;text-decoration:none}
-.sheet[hidden]{display:none}
-#msg{min-height:1.4em;font-weight:600;text-align:center}
-#msg.ok{color:var(--ok)}#msg.err{color:var(--err)}
+details{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+summary{font-weight:800;cursor:pointer}
+details p{color:var(--mute);font-size:.9rem}
+#prev{margin:12px 0;font-size:.85rem}
+.tw{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:.78rem}
+th,td{padding:5px 6px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--card)}
+#btnImp{width:100%}
 </style>
 </head>
 <body>
 <main>
-<h1><i></i>Ventas de fichas</h1>
-<form id="f" autocomplete="off">
+<h1><i></i>Fichas</h1>
+
+<div class="who modo" role="radiogroup" aria-label="Tipo de carga">
+  <label><input type="radio" name="modo" value="venta" checked><span>Venta</span></label>
+  <label><input type="radio" name="modo" value="compra"><span>Compra</span></label>
+</div>
+
+<form id="fv" autocomplete="off">
   <div><span class="lbl">¿Quién carga?</span>
     <div class="who">
-      <label><input type="radio" name="quien" value="Mateo" required><span>Mateo</span></label>
-      <label><input type="radio" name="quien" value="Mariano"><span>Mariano</span></label>
+      <label><input type="radio" name="quienV" value="Mateo" required><span>Mateo</span></label>
+      <label><input type="radio" name="quienV" value="Mariano"><span>Mariano</span></label>
     </div></div>
   <div><label for="cliente">Nombre / departamento</label>
     <input type="text" id="cliente" list="clientes" required><datalist id="clientes"></datalist></div>
@@ -58,16 +76,43 @@ button:disabled{opacity:.6}
   </div>
   <div class="profit"><span>Ganancia</span><b id="gan">$ 0</b></div>
   <button id="btn" type="submit">Guardar venta</button>
-  <div id="msg" role="status" aria-live="polite"></div>
+  <div id="msgV" class="msg" role="status" aria-live="polite"></div>
 </form>
+
+<form id="fc" autocomplete="off" hidden>
+  <div><span class="lbl">¿Quién compró?</span>
+    <div class="who">
+      <label><input type="radio" name="quienC" value="Mateo" required><span>Mateo</span></label>
+      <label><input type="radio" name="quienC" value="Mariano"><span>Mariano</span></label>
+    </div></div>
+  <div><label for="lugar">Lugar</label>
+    <input type="text" id="lugar" list="lugares" required><datalist id="lugares"></datalist></div>
+  <div class="row">
+    <div><label for="cantC">Cantidad de fichas</label><input type="number" id="cantC" inputmode="numeric" min="1" step="1" required></div>
+    <div><label for="fechaC">Fecha</label><input type="date" id="fechaC" required></div>
+  </div>
+  <div><label for="precioC">Precio por ficha</label><input type="number" id="precioC" inputmode="decimal" min="0" step="any" required></div>
+  <div class="profit"><span>Total</span><b id="total">$ 0</b></div>
+  <button id="btnC" type="submit">Guardar compra</button>
+  <div id="msgC" class="msg" role="status" aria-live="polite"></div>
+</form>
+
 <a id="sheetLink" class="sheet" href="#" target="_blank" rel="noopener" hidden>Abrir el Google Sheets</a>
+
+<details>
+  <summary>Importar chat de WhatsApp</summary>
+  <p>Subí el archivo .txt exportado del chat (si viene en .zip, descomprimilo antes). Primero te muestro lo que entendí y recién después se manda al Sheet. Usalo una sola vez.</p>
+  <input type="file" id="file" accept=".txt,text/plain">
+  <div id="prev"></div>
+  <button id="btnImp" type="button" hidden>Importar al Sheet</button>
+  <div id="msgI" class="msg" role="status" aria-live="polite"></div>
+</details>
 </main>
 <script>
 // Pegá acá la URL de la aplicación web de Apps Script (termina en /exec)
 const API = "https://script.google.com/macros/s/AKfycbzKcqGy5MQpF_m1vpbqHgGpmUK-S8cD-9k1OhvUokTHLe-zPY8LXerikB135CIyWpmcSA/exec";
 // Pegá acá la dirección del Google Sheet (la de la barra del navegador cuando lo abrís)
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/18Q6wyZ37S8xd4O24x14DCJ_WGi8ebrY2hRGlW6VRJDQ/edit?gid=1559333675#gid=1559333675";
-if (!SHEET_URL.startsWith("PEGAR")) { const a = document.getElementById("sheetLink"); a.href = SHEET_URL; a.hidden = false; }
 
 const $ = id => document.getElementById(id);
 const store = {
@@ -75,56 +120,246 @@ const store = {
   set(k,v){ try { localStorage.setItem(k,v) } catch(e){} }
 };
 const money = n => "$ " + Math.round(n).toLocaleString("es-AR");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
+const say = (id, text, cls) => { const m = $(id); m.textContent = text; m.className = "msg " + (cls || ""); };
+const apiListo = () => !API.startsWith("PEGAR");
 
-function calc(){
-  const g = ($("venta").value - $("compra").value) * $("cant").value;
-  const el = $("gan");
-  el.textContent = isFinite(g) ? money(g) : "$ 0";
-  el.classList.toggle("neg", g < 0);
+if (!SHEET_URL.startsWith("PEGAR")) { const a = $("sheetLink"); a.href = SHEET_URL; a.hidden = false; }
+
+function addOpt(list, v){
+  if (!v || [...list.options].some(o => o.value === v)) return;
+  const o = document.createElement("option"); o.value = v; list.appendChild(o);
 }
-["cant","compra","venta"].forEach(id => $(id).addEventListener("input", calc));
+["Neyer", "Kiosco Congreso"].forEach(v => addOpt($("lugares"), v));
 
-// Valores recordados
-$("fecha").value = today();
+async function enviar(payload){
+  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+  const res = await r.json();
+  if (!res.ok) throw new Error(res.error || "Error");
+  return res;
+}
+
+// ---------- Venta / Compra ----------
+function setModo(){
+  const m = document.querySelector("input[name=modo]:checked").value;
+  $("fv").hidden = m !== "venta"; $("fc").hidden = m !== "compra";
+  store.set("modo", m);
+}
+document.querySelectorAll("input[name=modo]").forEach(r => r.addEventListener("change", setModo));
+const modoGuardado = store.get("modo");
+if (modoGuardado) document.querySelector(`input[name=modo][value="${modoGuardado}"]`).checked = true;
+setModo();
+
+$("fecha").value = today(); $("fechaC").value = today();
 $("compra").value = store.get("compra") || "";
-$("venta").value = store.get("venta") || "";
+$("precioC").value = store.get("compra") || "";
 const q = store.get("quien");
-if (q) document.querySelector(`input[name=quien][value="${q}"]`).checked = true;
-calc();
+if (q) ["quienV","quienC"].forEach(n => { document.querySelector(`input[name=${n}][value="${q}"]`).checked = true; });
 
-// Clientes existentes para el desplegable
-if (!API.startsWith("PEGAR")) {
+function calcV(){
+  const g = ($("venta").value - $("compra").value) * $("cant").value;
+  $("gan").textContent = isFinite(g) ? money(g) : "$ 0";
+  $("gan").classList.toggle("neg", g < 0);
+}
+function calcC(){
+  const t = $("cantC").value * $("precioC").value;
+  $("total").textContent = isFinite(t) ? money(t) : "$ 0";
+}
+let ventaTocado = false;
+$("venta").addEventListener("input", () => { ventaTocado = true; calcV(); });
+$("compra").addEventListener("input", calcV);
+$("cant").addEventListener("input", () => {
+  if (!ventaTocado) { const c = Number($("cant").value); $("venta").value = c >= 10 ? 3200 : (c > 0 ? 3500 : ""); }
+  calcV();
+});
+["cantC","precioC"].forEach(id => $(id).addEventListener("input", calcC));
+calcV(); calcC();
+
+if (apiListo()) {
   fetch(API).then(r => r.json()).then(d => {
-    $("clientes").innerHTML = (d.clientes || []).map(c => `<option value="${c.replace(/"/g,"&quot;")}">`).join("");
+    (d.clientes || []).forEach(c => addOpt($("clientes"), c));
+    (d.lugares || []).forEach(l => addOpt($("lugares"), l));
   }).catch(() => {});
 }
 
-function say(text, cls){ const m = $("msg"); m.textContent = text; m.className = cls || ""; }
-
-$("f").addEventListener("submit", async e => {
+$("fv").addEventListener("submit", async e => {
   e.preventDefault();
-  if (API.startsWith("PEGAR")) return say("Falta configurar la URL de Apps Script.", "err");
+  if (!apiListo()) return say("msgV", "Falta configurar la URL de Apps Script.", "err");
   const data = {
-    cantidad: Number($("cant").value),
-    cliente: $("cliente").value.trim(),
-    compra: Number($("compra").value),
-    venta: Number($("venta").value),
-    fecha: $("fecha").value,
-    quien: document.querySelector("input[name=quien]:checked").value
+    tipo: "venta", cantidad: Number($("cant").value), cliente: $("cliente").value.trim(),
+    compra: Number($("compra").value), venta: Number($("venta").value), fecha: $("fecha").value,
+    quien: document.querySelector("input[name=quienV]:checked").value
   };
-  $("btn").disabled = true; say("Guardando…");
+  $("btn").disabled = true; say("msgV", "Guardando…");
   try {
-    const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data) });
-    const res = await r.json();
-    if (!res.ok) throw new Error(res.error || "Error");
-    store.set("compra", data.compra); store.set("venta", data.venta); store.set("quien", data.quien);
-    say("Venta guardada: " + data.cantidad + " fichas para " + data.cliente + ".", "ok");
-    $("cant").value = ""; $("cliente").value = ""; calc(); $("cliente").focus();
-    const opt = document.createElement("option"); opt.value = data.cliente; $("clientes").appendChild(opt);
+    await enviar(data);
+    store.set("compra", data.compra); store.set("quien", data.quien);
+    say("msgV", "Venta guardada: " + data.cantidad + " fichas para " + data.cliente + ".", "ok");
+    addOpt($("clientes"), data.cliente);
+    $("cant").value = ""; $("cliente").value = ""; $("venta").value = ""; ventaTocado = false; calcV(); $("cliente").focus();
   } catch (err) {
-    say("No se pudo guardar. Revisá la conexión y probá de nuevo.", "err");
+    say("msgV", "No se pudo guardar. Revisá la conexión y probá de nuevo.", "err");
   } finally { $("btn").disabled = false; }
+});
+
+$("fc").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!apiListo()) return say("msgC", "Falta configurar la URL de Apps Script.", "err");
+  const data = {
+    tipo: "compra", fecha: $("fechaC").value, quien: document.querySelector("input[name=quienC]:checked").value,
+    lugar: $("lugar").value.trim(), cantidad: Number($("cantC").value), precio: Number($("precioC").value)
+  };
+  $("btnC").disabled = true; say("msgC", "Guardando…");
+  try {
+    await enviar(data);
+    store.set("compra", data.precio); store.set("quien", data.quien); $("compra").value = data.precio; calcV();
+    say("msgC", "Compra guardada: " + data.cantidad + " fichas en " + data.lugar + ".", "ok");
+    addOpt($("lugares"), data.lugar);
+    $("cantC").value = ""; calcC(); $("cantC").focus();
+  } catch (err) {
+    say("msgC", "No se pudo guardar. Revisá la conexión y probá de nuevo.", "err");
+  } finally { $("btnC").disabled = false; }
+});
+
+// ---------- Importar chat de WhatsApp ----------
+// <parser>
+function parseChat(txt){
+  const p2 = n => String(n).padStart(2, "0");
+  const num = s => s ? parseInt(String(s).replace(/\.+$/, "").replace(/\./g, ""), 10) : null;
+  const MESES = {ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,set:9,oct:10,nov:11,dic:12};
+  const head = /^(\d{1,2})\/(\d{1,2})\/(\d{4}), \d{1,2}:\d{2} - /;
+  const raws = [];
+  for (const ln of txt.replace(/\r/g, "").replace(/[\u200e\u200f]/g, "").split("\n")) {
+    if (head.test(ln)) raws.push(ln); else if (raws.length) raws[raws.length - 1] += "\n" + ln;
+  }
+  const msgs = [];
+  for (const r of raws) {
+    const m = r.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}), \d{1,2}:\d{2} - ([^:\n]{1,60}): ([\s\S]*)$/);
+    if (!m) continue;
+    msgs.push({ iso: `${m[3]}-${p2(m[2])}-${p2(m[1])}`, y: m[3], who: m[4].trim(),
+      body: m[5].replace(/<Se editó este mensaje\.>/g, "").trim() });
+  }
+  function parseFecha(txt, y0){
+    let d, mo, y, m = txt.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,5}))?/);
+    if (m) { d = +m[1]; mo = +m[2]; y = m[3]; }
+    else {
+      m = txt.match(/(\d{1,2})\s+([A-Za-zÁÉÍÓÚáéíóú]+)(?:\s+(\d{4}))?/);
+      if (!m) return null;
+      d = +m[1]; mo = MESES[m[2].slice(0, 3).toLowerCase()]; y = m[3];
+      if (!mo) return null;
+    }
+    if (!y) y = y0; else if (y.length === 5) y = y.slice(0, 3) + y.slice(-1); else if (y.length === 2) y = "20" + y;
+    return `${y}-${p2(mo)}-${p2(d)}`;
+  }
+  const lugarNorm = raw => {
+    if (!raw) return "";
+    if (/neyer/i.test(raw)) return "Neyer";
+    if (/congreso/i.test(raw)) return "Kiosco Congreso";
+    if (/11 de sept/i.test(raw)) return "Súper 11 de Septiembre";
+    if (/\bort\b/i.test(raw)) return "Kiosko ORT";
+    return raw.trim();
+  };
+  // Compras
+  const compras = [];
+  for (const m of msgs) {
+    const t = m.body;
+    let n = null, unit = null, lugar = "", fecha = null, quien;
+    const inf = t.match(/Compr[eé]\s+(\d+)\s+fichas\s+a\s+\$?\s*([\d.]+)/i);
+    const f = t.match(/COMPRA DE (\d+) FICHAS/i) || t.match(/COMPRA DE FICHAS:?\s*(\d+)/i);
+    if (f) {
+      n = +f[1];
+      const u = t.match(/PRECIO UNITARIO:?\s*\$?\s*([\d.]+)/i);
+      const tot = t.match(/(?:PAGADO|PAGU[EÉ]|PAG[ÓO]|EGRESO)[^\d\n]*\$?\s*([\d.]+)/i);
+      unit = u ? num(u[1]) : (tot ? Math.round(num(tot[1]) / n) : null);
+      const lines = t.slice(t.search(/COMPRA DE/i)).split("\n");
+      let first = lines[0].replace(/COMPRA DE (FICHAS:?\s*)?\d+\s*(FICHAS)?/i, "").replace(/^\s*EN\s+/i, "").trim();
+      if (!first) { const nx = (lines.slice(1).find(l => l.trim()) || "").trim(); if (nx && !/PRECIO|PAG|FECHA|EGRESO|\$/i.test(nx)) first = nx; }
+      lugar = lugarNorm(first);
+      const fl = t.match(/FECHA:?\s*([^\n]+)/i);
+      fecha = fl ? parseFecha(fl[1], m.y) : null;
+    } else if (inf) {
+      n = +inf[1]; unit = num(inf[2]);
+    } else continue;
+    if (!fecha) fecha = m.iso;
+    quien = /INVERSI[ÓO]N\s+MARIANO/i.test(t) ? "Mariano" : /MATEO\s+PAG/i.test(t) ? "Mateo" : /^Mateo/i.test(m.who) ? "Mateo" : "Mariano";
+    compras.push({ fecha, quien, lugar, cantidad: n, precio: unit });
+  }
+  compras.sort((a, b) => a.fecha.localeCompare(b.fecha));
+  // Ventas
+  const ventas = [];
+  msgs.forEach((m, i) => {
+    const t = m.body;
+    const mc = t.match(/CANTIDAD DE FICHAS:?\s*(\d+)/i), mi = t.match(/INGRESO:?\s*\$?\s*([\d.]+)/i);
+    if (!mc || !mi) return;
+    const c = +mc[1], ing = num(mi[1]);
+    const fl = t.match(/FECHA:?\s*([^\n]+)/i);
+    let fecha = fl ? parseFecha(fl[1], m.y) : null;
+    for (let j = i - 1; !fecha && j >= Math.max(0, i - 3); j--) {
+      if (/^\d{1,2}\/\d{1,2}$/.test(msgs[j].body)) fecha = parseFecha(msgs[j].body, m.y);
+    }
+    if (!fecha) fecha = m.iso;
+    const mp = t.match(/PRECIO POR FICHA:?\s*\$?\s*([\d.]+)/i);
+    let p = mp ? num(mp[1]) : null;
+    if (p && ing && p * c !== ing) { if (ing % c === 0) p = ing / c; }
+    else if (!p && ing) p = Math.round(ing / c);
+    const mpc = t.match(/PRECIO DE COMPRA:?\s*\$?\s*([\d.]+)/i);
+    const mg = t.match(/GANANCIA:?\s*\$?\s*([\d.]+)/i);
+    let pc = mpc ? num(mpc[1]) : null, est = false;
+    if (pc === null && mg && p) { const v = (p * c - num(mg[1])) / c; if (Number.isInteger(v) && v > 0) { pc = v; est = true; } }
+    if (pc === null) {
+      const prev = compras.filter(x => x.fecha <= fecha && x.precio).pop();
+      if (prev) { pc = prev.precio; est = true; }
+    }
+    const mcl = t.match(/CLIENTE:?\s*([^\n]+)/i);
+    const cli = mcl ? mcl[1].replace(/\(.*?\)/g, "").replace(/\bPB\b/gi, "").replace(/\s+/g, " ").trim() : "";
+    ventas.push({ cantidad: c, cliente: cli, compra: pc, est, venta: p, fecha, quien: /^Mateo/i.test(m.who) ? "Mateo" : "Mariano" });
+  });
+  // Unificar clientes por número de departamento (se queda el nombre más largo)
+  const best = {};
+  for (const v of ventas) {
+    const k = (v.cliente.match(/#(\w+)/) || [])[1]; if (!k) continue;
+    const nombre = v.cliente.replace(/#\w+/, "").trim();
+    if (nombre.length > (best[k] || "").length) best[k] = nombre;
+  }
+  for (const v of ventas) {
+    const k = (v.cliente.match(/#(\w+)/) || [])[1];
+    if (k) v.cliente = (best[k] ? best[k] + " " : "") + "#" + k;
+  }
+  ventas.sort((a, b) => a.fecha.localeCompare(b.fecha));
+  return { ventas, compras };
+}
+// </parser>
+
+let pendiente = null;
+const fmt = iso => iso.split("-").reverse().join("/");
+$("file").addEventListener("change", async () => {
+  const f = $("file").files[0]; if (!f) return;
+  say("msgI", ""); $("btnImp").hidden = true;
+  const r = parseChat(await f.text());
+  pendiente = r;
+  if (!r.ventas.length && !r.compras.length) { $("prev").textContent = "No encontré ventas ni compras en este archivo."; return; }
+  const sinPc = r.ventas.filter(v => v.compra === null).length, estim = r.ventas.filter(v => v.est).length;
+  const sinPrecio = r.compras.filter(c => !c.precio).length;
+  let h = `<b>${r.ventas.length} ventas y ${r.compras.length} compras.</b> ${estim} ventas con precio de compra estimado (*), ${sinPc} sin precio de compra (quedan vacías)` + (sinPrecio ? `, ${sinPrecio} compras sin precio` : "") + ".";
+  h += `<div class="tw"><table><tr><th>Fecha</th><th>Cliente</th><th>Cant.</th><th>Venta</th><th>Compra</th><th>Quién</th></tr>` +
+    r.ventas.map(v => `<tr><td>${fmt(v.fecha)}</td><td>${esc(v.cliente)}</td><td>${v.cantidad}</td><td>${v.venta ?? "—"}</td><td>${v.compra === null ? "—" : (v.est ? "*" : "") + v.compra}</td><td>${v.quien}</td></tr>`).join("") + `</table></div>`;
+  h += `<div class="tw"><table><tr><th>Fecha</th><th>Quién</th><th>Lugar</th><th>Cant.</th><th>Precio</th></tr>` +
+    r.compras.map(c => `<tr><td>${fmt(c.fecha)}</td><td>${c.quien}</td><td>${esc(c.lugar || "—")}</td><td>${c.cantidad}</td><td>${c.precio ?? "—"}</td></tr>`).join("") + `</table></div>`;
+  $("prev").innerHTML = h; $("btnImp").hidden = false; $("btnImp").disabled = false;
+});
+$("btnImp").addEventListener("click", async () => {
+  if (!pendiente) return;
+  if (!apiListo()) return say("msgI", "Falta configurar la URL de Apps Script.", "err");
+  $("btnImp").disabled = true; say("msgI", "Importando…");
+  try {
+    await enviar({ tipo: "importar", ventas: pendiente.ventas.map(({ est, ...v }) => v), compras: pendiente.compras });
+    say("msgI", `Listo: ${pendiente.ventas.length} ventas y ${pendiente.compras.length} compras cargadas.`, "ok");
+    pendiente = null; $("btnImp").hidden = true; $("file").value = "";
+  } catch (err) {
+    say("msgI", "No se pudo importar. No se cargó nada nuevo que yo pueda confirmar: revisá el Sheet antes de reintentar.", "err");
+    $("btnImp").disabled = false;
+  }
 });
 </script>
 </body>
