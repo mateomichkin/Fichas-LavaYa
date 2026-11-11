@@ -74,7 +74,7 @@ th{position:sticky;top:0;background:var(--card)}
     <div><label for="compra">Precio compra (c/u)</label><input type="number" id="compra" inputmode="decimal" min="0" step="any" required></div>
     <div><label for="venta">Precio venta (c/u)</label><input type="number" id="venta" inputmode="decimal" min="0" step="any" required></div>
   </div>
-  <div class="profit"><span>Ganancia</span><b id="gan">$ 0</b></div>
+  <div class="profit"><span>Total</span><b id="gan">$ 0</b></div>
   <button id="btn" type="submit">Guardar venta</button>
   <div id="msgV" class="msg" role="status" aria-live="polite"></div>
 </form>
@@ -158,9 +158,8 @@ const q = store.get("quien");
 if (q) ["quienV","quienC"].forEach(n => { document.querySelector(`input[name=${n}][value="${q}"]`).checked = true; });
 
 function calcV(){
-  const g = ($("venta").value - $("compra").value) * $("cant").value;
-  $("gan").textContent = isFinite(g) ? money(g) : "$ 0";
-  $("gan").classList.toggle("neg", g < 0);
+  const t = $("venta").value * $("cant").value;
+  $("gan").textContent = isFinite(t) ? money(t) : "$ 0";
 }
 function calcC(){
   const t = $("cantC").value * $("precioC").value;
