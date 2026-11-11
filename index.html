@@ -32,7 +32,6 @@ input:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid
 .modo span{padding:14px;font-size:1.1rem;font-weight:800}
 .profit{display:flex;justify-content:space-between;align-items:baseline;padding:14px;border-radius:10px;background:var(--bg);border:1px dashed var(--line)}
 .profit b{font-size:1.6rem;font-weight:800}
-.profit b.neg{color:var(--err)}
 button{font:inherit;font-weight:800;font-size:1.05rem;padding:15px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
 button:disabled{opacity:.6}
 .msg{min-height:1.4em;font-weight:600;text-align:center}
@@ -64,8 +63,12 @@ th{position:sticky;top:0;background:var(--card)}
       <label><input type="radio" name="quienV" value="Mateo" required><span>Mateo</span></label>
       <label><input type="radio" name="quienV" value="Mariano"><span>Mariano</span></label>
     </div></div>
-  <div><label for="cliente">Nombre #departamento</label>
-    <input type="text" id="cliente" list="clientes" required><datalist id="clientes"></datalist></div>
+  <div class="row">
+    <div><label for="cliente">Nombre</label>
+      <input type="text" id="cliente" list="clientes"><datalist id="clientes"></datalist></div>
+    <div><label for="depto">Departamento</label>
+      <input type="text" id="depto" list="deptos"><datalist id="deptos"></datalist></div>
+  </div>
   <div class="row">
     <div><label for="cant">Cantidad de fichas</label><input type="number" id="cant" inputmode="numeric" min="1" step="1" required></div>
     <div><label for="fecha">Fecha</label><input type="date" id="fecha" required></div>
@@ -120,7 +123,7 @@ const store = {
   set(k,v){ try { localStorage.setItem(k,v) } catch(e){} }
 };
 const money = n => "$ " + (Math.round(n) || 0).toLocaleString("es-AR");
-const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
 const say = (id, text, cls) => { const m = $(id); m.textContent = text; m.className = "msg " + (cls || ""); };
 const apiListo = () => !API.startsWith("PEGAR");
@@ -178,6 +181,7 @@ calcV(); calcC();
 if (apiListo()) {
   fetch(API).then(r => r.json()).then(d => {
     (d.clientes || []).forEach(c => addOpt($("clientes"), c));
+    (d.deptos || []).forEach(x => addOpt($("deptos"), x));
     (d.lugares || []).forEach(l => addOpt($("lugares"), l));
   }).catch(() => {});
 }
@@ -186,17 +190,19 @@ $("fv").addEventListener("submit", async e => {
   e.preventDefault();
   if (!apiListo()) return say("msgV", "Falta configurar la URL de Apps Script.", "err");
   const data = {
-    tipo: "venta", cantidad: Number($("cant").value), cliente: $("cliente").value.trim(),
+    tipo: "venta", cantidad: Number($("cant").value),
+    cliente: $("cliente").value.trim(), depto: $("depto").value.trim(),
     compra: Number($("compra").value), venta: Number($("venta").value), fecha: $("fecha").value,
     quien: document.querySelector("input[name=quienV]:checked").value
   };
+  if (!data.cliente && !data.depto) return say("msgV", "Poné al menos nombre o departamento.", "err");
   $("btn").disabled = true; say("msgV", "Guardando…");
   try {
     await enviar(data);
     store.set("compra", data.compra); store.set("quien", data.quien);
-    say("msgV", "Venta guardada: " + data.cantidad + " fichas para " + data.cliente + ".", "ok");
-    addOpt($("clientes"), data.cliente);
-    $("cant").value = ""; $("cliente").value = ""; $("venta").value = ""; ventaTocado = false; calcV(); $("cliente").focus();
+    say("msgV", "Venta guardada: " + data.cantidad + " fichas para " + (data.cliente || data.depto) + ".", "ok");
+    addOpt($("clientes"), data.cliente); addOpt($("deptos"), data.depto);
+    $("cant").value = ""; $("cliente").value = ""; $("depto").value = ""; $("venta").value = ""; ventaTocado = false; calcV(); $("cliente").focus();
   } catch (err) {
     say("msgV", "No se pudo guardar. Revisá la conexión y probá de nuevo.", "err");
   } finally { $("btn").disabled = false; }
@@ -222,7 +228,6 @@ $("fc").addEventListener("submit", async e => {
 });
 
 // ---------- Importar chat de WhatsApp ----------
-// <parser>
 function parseChat(txt){
   const p2 = n => String(n).padStart(2, "0");
   const num = s => s ? parseInt(String(s).replace(/\.+$/, "").replace(/\./g, ""), 10) : null;
@@ -312,9 +317,9 @@ function parseChat(txt){
     }
     const mcl = t.match(/CLIENTE:?\s*([^\n]+)/i);
     const cli = mcl ? mcl[1].replace(/\(.*?\)/g, "").replace(/\bPB\b/gi, "").replace(/\s+/g, " ").trim() : "";
-    ventas.push({ cantidad: c, cliente: cli, compra: pc, est, venta: p, fecha, quien: /^Mateo/i.test(m.who) ? "Mateo" : "Mariano" });
+    ventas.push({ cantidad: c, cliente: cli, depto: "", compra: pc, est, venta: p, fecha, quien: /^Mateo/i.test(m.who) ? "Mateo" : "Mariano" });
   });
-  // Unificar clientes por número de departamento (se queda el nombre más largo)
+  // Separar nombre y departamento (#número); se usa el nombre más largo por departamento
   const best = {};
   for (const v of ventas) {
     const k = (v.cliente.match(/#(\w+)/) || [])[1]; if (!k) continue;
@@ -323,12 +328,12 @@ function parseChat(txt){
   }
   for (const v of ventas) {
     const k = (v.cliente.match(/#(\w+)/) || [])[1];
-    if (k) v.cliente = (best[k] ? best[k] + " " : "") + "#" + k;
+    v.depto = k || "";
+    v.cliente = k ? (best[k] || "") : v.cliente;
   }
   ventas.sort((a, b) => a.fecha.localeCompare(b.fecha));
   return { ventas, compras };
 }
-// </parser>
 
 let pendiente = null;
 const fmt = iso => iso.split("-").reverse().join("/");
@@ -341,8 +346,8 @@ $("file").addEventListener("change", async () => {
   const sinPc = r.ventas.filter(v => v.compra === null).length, estim = r.ventas.filter(v => v.est).length;
   const sinPrecio = r.compras.filter(c => !c.precio).length;
   let h = `<b>${r.ventas.length} ventas y ${r.compras.length} compras.</b> ${estim} ventas con precio de compra estimado (*), ${sinPc} sin precio de compra (quedan vacías)` + (sinPrecio ? `, ${sinPrecio} compras sin precio` : "") + ".";
-  h += `<div class="tw"><table><tr><th>Fecha</th><th>Cliente</th><th>Cant.</th><th>Venta</th><th>Compra</th><th>Quién</th></tr>` +
-    r.ventas.map(v => `<tr><td>${fmt(v.fecha)}</td><td>${esc(v.cliente)}</td><td>${v.cantidad}</td><td>${v.venta ?? "—"}</td><td>${v.compra === null ? "—" : (v.est ? "*" : "") + v.compra}</td><td>${v.quien}</td></tr>`).join("") + `</table></div>`;
+  h += `<div class="tw"><table><tr><th>Fecha</th><th>Nombre</th><th>Depto</th><th>Cant.</th><th>Venta</th><th>Compra</th><th>Quién</th></tr>` +
+    r.ventas.map(v => `<tr><td>${fmt(v.fecha)}</td><td>${esc(v.cliente)}</td><td>${esc(v.depto)}</td><td>${v.cantidad}</td><td>${v.venta ?? "—"}</td><td>${v.compra === null ? "—" : (v.est ? "*" : "") + v.compra}</td><td>${v.quien}</td></tr>`).join("") + `</table></div>`;
   h += `<div class="tw"><table><tr><th>Fecha</th><th>Quién</th><th>Lugar</th><th>Cant.</th><th>Precio</th></tr>` +
     r.compras.map(c => `<tr><td>${fmt(c.fecha)}</td><td>${c.quien}</td><td>${esc(c.lugar || "—")}</td><td>${c.cantidad}</td><td>${c.precio ?? "—"}</td></tr>`).join("") + `</table></div>`;
   $("prev").innerHTML = h; $("btnImp").hidden = false; $("btnImp").disabled = false;
