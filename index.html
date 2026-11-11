@@ -119,7 +119,7 @@ const store = {
   get(k){ try { return localStorage.getItem(k) } catch(e){ return null } },
   set(k,v){ try { localStorage.setItem(k,v) } catch(e){} }
 };
-const money = n => "$ " + Math.round(n).toLocaleString("es-AR");
+const money = n => "$ " + (Math.round(n) || 0).toLocaleString("es-AR");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
 const say = (id, text, cls) => { const m = $(id); m.textContent = text; m.className = "msg " + (cls || ""); };
