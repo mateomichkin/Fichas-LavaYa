@@ -292,7 +292,7 @@
   <main>
     <h1><i></i>Fichas</h1>
 
-    <div class="profit" style="margin-bottom:14px;align-items:center"><span>Fichas que tengo</span><b id="stock">–</b></div>
+    <div class="profit" style="margin-bottom:14px;align-items:center"><span>Fichas en stock</span><b id="stock">–</b></div>
 
     <div class="who modo" role="radiogroup" aria-label="Tipo de carga">
       <label><input type="radio" name="modo" value="venta" checked><span>Venta</span></label>
@@ -438,6 +438,10 @@
         if (d.stock !== undefined) $("stock").textContent = d.stock;
         }).catch(() => {});
     }
+
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) cargarStock(); });
+    setInterval(() => { if (!document.hidden) cargarStock(); }, 30000);
+
     if (apiListo()) {
       fetch(API).then(r => r.json()).then(d => {
         if (d.stock !== undefined) $("stock").textContent = d.stock;
