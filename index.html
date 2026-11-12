@@ -432,11 +432,11 @@
     ["cantC", "precioC"].forEach(id => $(id).addEventListener("input", calcC));
     calcV(); calcC();
 
-    function cargarStock() {
+    function cargarStock(){
       if (!apiListo()) return;
-      fetch(API).then(r => r.json()).then(d => {
+      fetch(API + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).then(d => {
         if (d.stock !== undefined) $("stock").textContent = d.stock;
-      }).catch(() => { });
+        }).catch(() => {});
     }
     if (apiListo()) {
       fetch(API).then(r => r.json()).then(d => {
