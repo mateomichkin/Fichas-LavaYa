@@ -189,6 +189,10 @@
       font-weight: 800
     }
 
+    #stock.low {
+      color: var(--err)
+    }
+
     button {
       font: inherit;
       font-weight: 800;
@@ -389,6 +393,14 @@
     }
     ["Neyer", "Kiosco Congreso"].forEach(v => addOpt($("lugares"), v));
 
+    // Muestra el stock y lo pinta de rojo si está por debajo del límite de aviso
+    function pintarStock(d) {
+      if (d.stock === undefined) return;
+      const s = $("stock");
+      s.textContent = d.stock;
+      s.classList.toggle("low", d.limite !== undefined && d.stock < d.limite);
+    }
+
     async function enviar(payload) {
       const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
       const res = await r.json();
@@ -432,11 +444,9 @@
     ["cantC", "precioC"].forEach(id => $(id).addEventListener("input", calcC));
     calcV(); calcC();
 
-    function cargarStock(){
+    function cargarStock() {
       if (!apiListo()) return;
-      fetch(API + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).then(d => {
-        if (d.stock !== undefined) $("stock").textContent = d.stock;
-        }).catch(() => {});
+      fetch(API + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).then(pintarStock).catch(() => { });
     }
 
     document.addEventListener("visibilitychange", () => { if (!document.hidden) cargarStock(); });
@@ -444,7 +454,7 @@
 
     if (apiListo()) {
       fetch(API).then(r => r.json()).then(d => {
-        if (d.stock !== undefined) $("stock").textContent = d.stock;
+        pintarStock(d);
         (d.clientes || []).forEach(c => addOpt($("clientes"), c));
         (d.deptos || []).forEach(x => addOpt($("deptos"), x));
         (d.lugares || []).forEach(l => addOpt($("lugares"), l));
