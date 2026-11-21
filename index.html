@@ -13,7 +13,6 @@
       --bg: #f4f7f8;
       --card: #fff;
       --ink: #12303b;
-      --mute: #5d7580;
       --line: #d5e0e4;
       --accent: #0e7c86;
       --accent-ink: #fff;
@@ -28,7 +27,6 @@
         --bg: #0e1b21;
         --card: #16272f;
         --ink: #e6f0f3;
-        --mute: #93aab3;
         --line: #2a414b;
         --accent: #3cb4bf;
         --accent-ink: #06242a;
@@ -115,8 +113,7 @@
     }
 
     input:focus-visible,
-    button:focus-visible,
-    summary:focus-visible {
+    button:focus-visible {
       outline: 3px solid var(--accent);
       outline-offset: 2px
     }
@@ -234,61 +231,6 @@
       font-weight: 800;
       text-decoration: none
     }
-
-    details {
-      margin-top: 18px;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px 18px
-    }
-
-    summary {
-      font-weight: 800;
-      cursor: pointer
-    }
-
-    details p {
-      color: var(--mute);
-      font-size: .9rem
-    }
-
-    #prev {
-      margin: 12px 0;
-      font-size: .85rem
-    }
-
-    .tw {
-      max-height: 220px;
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      margin: 8px 0
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: .78rem
-    }
-
-    th,
-    td {
-      padding: 5px 6px;
-      text-align: left;
-      white-space: nowrap;
-      border-bottom: 1px solid var(--line)
-    }
-
-    th {
-      position: sticky;
-      top: 0;
-      background: var(--card)
-    }
-
-    #btnImp {
-      width: 100%
-    }
   </style>
 </head>
 
@@ -356,22 +298,12 @@
       <div id="msgC" class="msg" role="status" aria-live="polite"></div>
     </form>
 
-    <a id="sheetLink" class="sheet" href="#" target="_blank" rel="noopener" hidden>Abrir el Google Sheets</a>
-
-    <details>
-      <summary>Importar chat de WhatsApp</summary>
-      <p>Subí el archivo .txt exportado del chat (si viene en .zip, descomprimilo antes). Primero te muestro lo que
-        entendí y recién después se manda al Sheet. Usalo una sola vez.</p>
-      <input type="file" id="file" accept=".txt,text/plain">
-      <div id="prev"></div>
-      <button id="btnImp" type="button" hidden>Importar al Sheet</button>
-      <div id="msgI" class="msg" role="status" aria-live="polite"></div>
-    </details>
+    <a class="sheet" id="sheetLink" target="_blank" rel="noopener">Abrir el Google Sheets</a>
   </main>
   <script>
-    // Pegá acá la URL de la aplicación web de Apps Script (termina en /exec)
+    // URL de la aplicación web de Apps Script (termina en /exec)
     const API = "https://script.google.com/macros/s/AKfycbzKcqGy5MQpF_m1vpbqHgGpmUK-S8cD-9k1OhvUokTHLe-zPY8LXerikB135CIyWpmcSA/exec";
-    // Pegá acá la dirección del Google Sheet (la de la barra del navegador cuando lo abrís)
+    // Dirección del Google Sheet
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/18Q6wyZ37S8xd4O24x14DCJ_WGi8ebrY2hRGlW6VRJDQ/edit?gid=1559333675#gid=1559333675";
 
     const $ = id => document.getElementById(id);
@@ -380,18 +312,15 @@
       set(k, v) { try { localStorage.setItem(k, v) } catch (e) { } }
     };
     const money = n => "$ " + (Math.round(n) || 0).toLocaleString("es-AR");
-    const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
     const say = (id, text, cls) => { const m = $(id); m.textContent = text; m.className = "msg " + (cls || ""); };
-    const apiListo = () => !API.startsWith("PEGAR");
 
-    if (!SHEET_URL.startsWith("PEGAR")) { const a = $("sheetLink"); a.href = SHEET_URL; a.hidden = false; }
+    $("sheetLink").href = SHEET_URL;
 
     function addOpt(list, v) {
       if (!v || [...list.options].some(o => o.value === v)) return;
       const o = document.createElement("option"); o.value = v; list.appendChild(o);
     }
-    ["Neyer", "Kiosco Congreso"].forEach(v => addOpt($("lugares"), v));
 
     // Muestra el stock y lo pinta de rojo si está por debajo del límite de aviso
     function pintarStock(d) {
@@ -399,6 +328,10 @@
       const s = $("stock");
       s.textContent = d.stock;
       s.classList.toggle("low", d.limite !== undefined && d.stock < d.limite);
+    }
+
+    function cargarStock() {
+      fetch(API + "?solo=stock&t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).then(pintarStock).catch(() => { });
     }
 
     async function enviar(payload) {
@@ -444,26 +377,20 @@
     ["cantC", "precioC"].forEach(id => $(id).addEventListener("input", calcC));
     calcV(); calcC();
 
-    function cargarStock() {
-      if (!apiListo()) return;
-      fetch(API + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).then(pintarStock).catch(() => { });
-    }
+    // Carga inicial: stock y listas para los desplegables
+    fetch(API).then(r => r.json()).then(d => {
+      pintarStock(d);
+      (d.clientes || []).forEach(c => addOpt($("clientes"), c));
+      (d.deptos || []).forEach(x => addOpt($("deptos"), x));
+      (d.lugares || []).forEach(l => addOpt($("lugares"), l));
+    }).catch(() => { });
 
+    // Actualiza el stock al volver a la app y cada 30 segundos
     document.addEventListener("visibilitychange", () => { if (!document.hidden) cargarStock(); });
     setInterval(() => { if (!document.hidden) cargarStock(); }, 30000);
 
-    if (apiListo()) {
-      fetch(API).then(r => r.json()).then(d => {
-        pintarStock(d);
-        (d.clientes || []).forEach(c => addOpt($("clientes"), c));
-        (d.deptos || []).forEach(x => addOpt($("deptos"), x));
-        (d.lugares || []).forEach(l => addOpt($("lugares"), l));
-      }).catch(() => { });
-    }
-
     $("fv").addEventListener("submit", async e => {
       e.preventDefault();
-      if (!apiListo()) return say("msgV", "Falta configurar la URL de Apps Script.", "err");
       const data = {
         tipo: "venta", cantidad: Number($("cant").value),
         cliente: $("cliente").value.trim(), depto: $("depto").value.trim(),
@@ -485,7 +412,6 @@
 
     $("fc").addEventListener("submit", async e => {
       e.preventDefault();
-      if (!apiListo()) return say("msgC", "Falta configurar la URL de Apps Script.", "err");
       const data = {
         tipo: "compra", fecha: $("fechaC").value, quien: document.querySelector("input[name=quienC]:checked").value,
         lugar: $("lugar").value.trim(), cantidad: Number($("cantC").value), precio: Number($("precioC").value)
@@ -500,147 +426,6 @@
       } catch (err) {
         say("msgC", "No se pudo guardar. Revisá la conexión y probá de nuevo.", "err");
       } finally { $("btnC").disabled = false; }
-    });
-
-    // ---------- Importar chat de WhatsApp ----------
-    function parseChat(txt) {
-      const p2 = n => String(n).padStart(2, "0");
-      const num = s => s ? parseInt(String(s).replace(/\.+$/, "").replace(/\./g, ""), 10) : null;
-      const MESES = { ene: 1, feb: 2, mar: 3, abr: 4, may: 5, jun: 6, jul: 7, ago: 8, sep: 9, set: 9, oct: 10, nov: 11, dic: 12 };
-      const head = /^(\d{1,2})\/(\d{1,2})\/(\d{4}), \d{1,2}:\d{2} - /;
-      const raws = [];
-      for (const ln of txt.replace(/\r/g, "").replace(/[\u200e\u200f]/g, "").split("\n")) {
-        if (head.test(ln)) raws.push(ln); else if (raws.length) raws[raws.length - 1] += "\n" + ln;
-      }
-      const msgs = [];
-      for (const r of raws) {
-        const m = r.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}), \d{1,2}:\d{2} - ([^:\n]{1,60}): ([\s\S]*)$/);
-        if (!m) continue;
-        msgs.push({
-          iso: `${m[3]}-${p2(m[2])}-${p2(m[1])}`, y: m[3], who: m[4].trim(),
-          body: m[5].replace(/<Se editó este mensaje\.>/g, "").trim()
-        });
-      }
-      function parseFecha(txt, y0) {
-        let d, mo, y, m = txt.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,5}))?/);
-        if (m) { d = +m[1]; mo = +m[2]; y = m[3]; }
-        else {
-          m = txt.match(/(\d{1,2})\s+([A-Za-zÁÉÍÓÚáéíóú]+)(?:\s+(\d{4}))?/);
-          if (!m) return null;
-          d = +m[1]; mo = MESES[m[2].slice(0, 3).toLowerCase()]; y = m[3];
-          if (!mo) return null;
-        }
-        if (!y) y = y0; else if (y.length === 5) y = y.slice(0, 3) + y.slice(-1); else if (y.length === 2) y = "20" + y;
-        return `${y}-${p2(mo)}-${p2(d)}`;
-      }
-      const lugarNorm = raw => {
-        if (!raw) return "";
-        if (/neyer/i.test(raw)) return "Neyer";
-        if (/congreso/i.test(raw)) return "Kiosco Congreso";
-        if (/11 de sept/i.test(raw)) return "Súper 11 de Septiembre";
-        if (/\bort\b/i.test(raw)) return "Kiosko ORT";
-        return raw.trim();
-      };
-      // Compras
-      const compras = [];
-      for (const m of msgs) {
-        const t = m.body;
-        let n = null, unit = null, lugar = "", fecha = null, quien;
-        const inf = t.match(/Compr[eé]\s+(\d+)\s+fichas\s+a\s+\$?\s*([\d.]+)/i);
-        const f = t.match(/COMPRA DE (\d+) FICHAS/i) || t.match(/COMPRA DE FICHAS:?\s*(\d+)/i);
-        if (f) {
-          n = +f[1];
-          const u = t.match(/PRECIO UNITARIO:?\s*\$?\s*([\d.]+)/i);
-          const tot = t.match(/(?:PAGADO|PAGU[EÉ]|PAG[ÓO]|EGRESO)[^\d\n]*\$?\s*([\d.]+)/i);
-          unit = u ? num(u[1]) : (tot ? Math.round(num(tot[1]) / n) : null);
-          const lines = t.slice(t.search(/COMPRA DE/i)).split("\n");
-          let first = lines[0].replace(/COMPRA DE (FICHAS:?\s*)?\d+\s*(FICHAS)?/i, "").replace(/^\s*EN\s+/i, "").trim();
-          if (!first) { const nx = (lines.slice(1).find(l => l.trim()) || "").trim(); if (nx && !/PRECIO|PAG|FECHA|EGRESO|\$/i.test(nx)) first = nx; }
-          lugar = lugarNorm(first);
-          const fl = t.match(/FECHA:?\s*([^\n]+)/i);
-          fecha = fl ? parseFecha(fl[1], m.y) : null;
-        } else if (inf) {
-          n = +inf[1]; unit = num(inf[2]);
-        } else continue;
-        if (!fecha) fecha = m.iso;
-        quien = /INVERSI[ÓO]N\s+MARIANO/i.test(t) ? "Mariano" : /MATEO\s+PAG/i.test(t) ? "Mateo" : /^Mateo/i.test(m.who) ? "Mateo" : "Mariano";
-        compras.push({ fecha, quien, lugar, cantidad: n, precio: unit });
-      }
-      compras.sort((a, b) => a.fecha.localeCompare(b.fecha));
-      // Ventas
-      const ventas = [];
-      msgs.forEach((m, i) => {
-        const t = m.body;
-        const mc = t.match(/CANTIDAD DE FICHAS:?\s*(\d+)/i), mi = t.match(/INGRESO:?\s*\$?\s*([\d.]+)/i);
-        if (!mc || !mi) return;
-        const c = +mc[1], ing = num(mi[1]);
-        const fl = t.match(/FECHA:?\s*([^\n]+)/i);
-        let fecha = fl ? parseFecha(fl[1], m.y) : null;
-        for (let j = i - 1; !fecha && j >= Math.max(0, i - 3); j--) {
-          if (/^\d{1,2}\/\d{1,2}$/.test(msgs[j].body)) fecha = parseFecha(msgs[j].body, m.y);
-        }
-        if (!fecha) fecha = m.iso;
-        const mp = t.match(/PRECIO POR FICHA:?\s*\$?\s*([\d.]+)/i);
-        let p = mp ? num(mp[1]) : null;
-        if (p && ing && p * c !== ing) { if (ing % c === 0) p = ing / c; }
-        else if (!p && ing) p = Math.round(ing / c);
-        const mpc = t.match(/PRECIO DE COMPRA:?\s*\$?\s*([\d.]+)/i);
-        const mg = t.match(/GANANCIA:?\s*\$?\s*([\d.]+)/i);
-        let pc = mpc ? num(mpc[1]) : null, est = false;
-        if (pc === null && mg && p) { const v = (p * c - num(mg[1])) / c; if (Number.isInteger(v) && v > 0) { pc = v; est = true; } }
-        if (pc === null) {
-          const prev = compras.filter(x => x.fecha <= fecha && x.precio).pop();
-          if (prev) { pc = prev.precio; est = true; }
-        }
-        const mcl = t.match(/CLIENTE:?\s*([^\n]+)/i);
-        const cli = mcl ? mcl[1].replace(/\(.*?\)/g, "").replace(/\bPB\b/gi, "").replace(/\s+/g, " ").trim() : "";
-        ventas.push({ cantidad: c, cliente: cli, depto: "", compra: pc, est, venta: p, fecha, quien: /^Mateo/i.test(m.who) ? "Mateo" : "Mariano" });
-      });
-      // Separar nombre y departamento (#número); se usa el nombre más largo por departamento
-      const best = {};
-      for (const v of ventas) {
-        const k = (v.cliente.match(/#(\w+)/) || [])[1]; if (!k) continue;
-        const nombre = v.cliente.replace(/#\w+/, "").trim();
-        if (nombre.length > (best[k] || "").length) best[k] = nombre;
-      }
-      for (const v of ventas) {
-        const k = (v.cliente.match(/#(\w+)/) || [])[1];
-        v.depto = k || "";
-        v.cliente = k ? (best[k] || "") : v.cliente;
-      }
-      ventas.sort((a, b) => a.fecha.localeCompare(b.fecha));
-      return { ventas, compras };
-    }
-
-    let pendiente = null;
-    const fmt = iso => iso.split("-").reverse().join("/");
-    $("file").addEventListener("change", async () => {
-      const f = $("file").files[0]; if (!f) return;
-      say("msgI", ""); $("btnImp").hidden = true;
-      const r = parseChat(await f.text());
-      pendiente = r;
-      if (!r.ventas.length && !r.compras.length) { $("prev").textContent = "No encontré ventas ni compras en este archivo."; return; }
-      const sinPc = r.ventas.filter(v => v.compra === null).length, estim = r.ventas.filter(v => v.est).length;
-      const sinPrecio = r.compras.filter(c => !c.precio).length;
-      let h = `<b>${r.ventas.length} ventas y ${r.compras.length} compras.</b> ${estim} ventas con precio de compra estimado (*), ${sinPc} sin precio de compra (quedan vacías)` + (sinPrecio ? `, ${sinPrecio} compras sin precio` : "") + ".";
-      h += `<div class="tw"><table><tr><th>Fecha</th><th>Nombre</th><th>Depto</th><th>Cant.</th><th>Venta</th><th>Compra</th><th>Quién</th></tr>` +
-        r.ventas.map(v => `<tr><td>${fmt(v.fecha)}</td><td>${esc(v.cliente)}</td><td>${esc(v.depto)}</td><td>${v.cantidad}</td><td>${v.venta ?? "—"}</td><td>${v.compra === null ? "—" : (v.est ? "*" : "") + v.compra}</td><td>${v.quien}</td></tr>`).join("") + `</table></div>`;
-      h += `<div class="tw"><table><tr><th>Fecha</th><th>Quién</th><th>Lugar</th><th>Cant.</th><th>Precio</th></tr>` +
-        r.compras.map(c => `<tr><td>${fmt(c.fecha)}</td><td>${c.quien}</td><td>${esc(c.lugar || "—")}</td><td>${c.cantidad}</td><td>${c.precio ?? "—"}</td></tr>`).join("") + `</table></div>`;
-      $("prev").innerHTML = h; $("btnImp").hidden = false; $("btnImp").disabled = false;
-    });
-    $("btnImp").addEventListener("click", async () => {
-      if (!pendiente) return;
-      if (!apiListo()) return say("msgI", "Falta configurar la URL de Apps Script.", "err");
-      $("btnImp").disabled = true; say("msgI", "Importando…");
-      try {
-        await enviar({ tipo: "importar", ventas: pendiente.ventas.map(({ est, ...v }) => v), compras: pendiente.compras });
-        say("msgI", `Listo: ${pendiente.ventas.length} ventas y ${pendiente.compras.length} compras cargadas.`, "ok");
-        pendiente = null; $("btnImp").hidden = true; $("file").value = "";
-      } catch (err) {
-        say("msgI", "No se pudo importar. No se cargó nada nuevo que yo pueda confirmar: revisá el Sheet antes de reintentar.", "err");
-        $("btnImp").disabled = false;
-      }
     });
   </script>
 </body>
